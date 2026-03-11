@@ -1,0 +1,87 @@
+version: "3.9"
+services:
+  mysql-pagamentos:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
+      MYSQL_DATABASE: alurafood-pagamento
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-pagamentos-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-pedidos:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
+      MYSQL_DATABASE: alurafood-pedidos
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-pedidos-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build: ./server
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  gateway:
+    build: ./gateway
+    ports:
+      - "8082:8082"
+    depends_on:
+      server:
+        condition: service_healthy
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
+
+  pagamentos:
+    build: ./pagamentos
+    ports:
+      - "8083:8083"
+    depends_on:
+      server:
+        condition: service_healthy
+      mysql-pagamentos:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8083
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-pagamentos:3306/alurafood-pagamento?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
+
+  pedidos:
+    build: ./pedidos
+    ports:
+      - "8084:8084"
+    depends_on:
+      server:
+        condition: service_healthy
+      mysql-pedidos:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8084
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-pedidos:3306/alurafood-pedidos?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
+
+volumes:
+  mysql-pagamentos-data:
+  mysql-pedidos-data:

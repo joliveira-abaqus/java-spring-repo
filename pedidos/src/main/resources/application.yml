@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: pedidos-ms
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/alurafood-pedidos?createDatabaseIfNotExist=true}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+  jpa:
+    show-sql: true
+  flyway:
+    enabled: true
+server:
+  port: 0
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8081/eureka
