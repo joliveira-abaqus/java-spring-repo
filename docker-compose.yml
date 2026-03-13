@@ -1,0 +1,80 @@
+services:
+
+  mysql-pagamentos:
+    image: mysql:8.0
+    container_name: mysql-pagamentos
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
+      MYSQL_DATABASE: alurafood-pagamento
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-pagamentos-data:/var/lib/mysql
+    restart: always
+
+  mysql-pedidos:
+    image: mysql:8.0
+    container_name: mysql-pedidos
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
+      MYSQL_DATABASE: alurafood-pedidos
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-pedidos-data:/var/lib/mysql
+    restart: always
+
+  server:
+    build: ./server
+    container_name: eureka-server
+    ports:
+      - "8081:8081"
+    restart: always
+
+  gateway:
+    build: ./gateway
+    container_name: api-gateway
+    ports:
+      - "8082:8082"
+    restart: always
+    depends_on:
+      - server
+    environment:
+      SERVER_PORT: 8082
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
+
+  pagamentos:
+    build: ./pagamentos
+    container_name: pagamentos-ms
+    ports:
+      - "8083:8083"
+    restart: always
+    depends_on:
+      - gateway
+      - mysql-pagamentos
+    environment:
+      SERVER_PORT: 8083
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-pagamentos:3306/alurafood-pagamento?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
+
+  pedidos:
+    build: ./pedidos
+    container_name: pedidos-ms
+    ports:
+      - "8084:8084"
+    restart: always
+    depends_on:
+      - gateway
+      - mysql-pedidos
+    environment:
+      SERVER_PORT: 8084
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-pedidos:3306/alurafood-pedidos?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
+
+volumes:
+  mysql-pagamentos-data:
+  mysql-pedidos-data:
