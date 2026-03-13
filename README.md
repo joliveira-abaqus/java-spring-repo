@@ -1,12 +1,7 @@
-
-![thumbnail-Microsserviços com Java e Spring](https://user-images.githubusercontent.com/66698429/169815319-20640ad4-cda0-4868-9728-d380c5fcc799.png)
-
+# Microsserviços com Java e Spring
 
 
-# Alura Food - Microsserviços com Java e Spring
-
-
-Projeto de microsserviços com Java e Spring da Alura, atualizado para as versões mais recentes.
+Projeto de microsserviços com Java e Spring, atualizado para as versões mais recentes.
 
 ## Versões
 
@@ -87,10 +82,3 @@ Os testes de integração utilizam H2 em memória (perfil `test`), sem necessida
 <p>  Além disso, fazemos a implementação do Service Discovery utilizando o [Eureka](https://spring.io/projects/spring-cloud-netflix),   solução desenvolvida pela Netflix e que faz parte do [Spring Cloud](https://spring.io/projects/spring-cloud). Incluímos também à arquitetura um [API Gateway](https://spring.io/projects/spring-cloud-gateway), que vai atuar como ponto central para as nossas requisições. É feita a inclusão de um novo microsserviço, que é o de pedidos, onde praticamos a comunicação síncrona e o balanceamento de carga, quando há mais de uma instância do projeto em execução.</p>
 
 <p>  Para fechar, tratamos os conceitos de circuit breaker e fallback, utilizando o [Resilience4J](https://resilience4j.readme.io/docs/getting-started-3) e promovendo uma alternativa quando um dos serviços está inoperante.</p>
-
-## Links do curso
-
-- [Formação Spring](https://cursos.alura.com.br/formacao-spring-framework)
-- [Microsserviços: padrões de projeto](https://cursos.alura.com.br/course/microsservicos-padroes-projeto)
-- [Fundamentos de Microsserviços: Se aprofundando nos conceitos](https://cursos.alura.com.br/course/fundamentos-microsservicos-aprofundando-conceitos)
-- [Microsserviços na prática: entendendo a tomada de decisões](https://cursos.alura.com.br/course/Microsservicos-pratica-tomada-decisoes)
