@@ -62,7 +62,8 @@ class PedidoControllerTest {
 
         mockMvc.perform(get("/pedidos")
                         .header("X-Auth-User-Email", "admin@alurafood.com")
-                        .header("X-Auth-User-Role", "ROLE_USER"))
+                        .header("X-Auth-User-Role", "ROLE_USER")
+                        .header("X-Gateway-Secret", "test-gateway-secret"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].status").value("REALIZADO"));
@@ -74,7 +75,8 @@ class PedidoControllerTest {
 
         mockMvc.perform(get("/pedidos/1")
                         .header("X-Auth-User-Email", "admin@alurafood.com")
-                        .header("X-Auth-User-Role", "ROLE_USER"))
+                        .header("X-Auth-User-Role", "ROLE_USER")
+                        .header("X-Gateway-Secret", "test-gateway-secret"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.status").value("REALIZADO"));
@@ -87,6 +89,7 @@ class PedidoControllerTest {
         mockMvc.perform(post("/pedidos")
                         .header("X-Auth-User-Email", "admin@alurafood.com")
                         .header("X-Auth-User-Role", "ROLE_USER")
+                        .header("X-Gateway-Secret", "test-gateway-secret")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(pedidoDto)))
                 .andExpect(status().isCreated())
@@ -110,6 +113,7 @@ class PedidoControllerTest {
         mockMvc.perform(put("/pedidos/1/status")
                         .header("X-Auth-User-Email", "admin@alurafood.com")
                         .header("X-Auth-User-Role", "ROLE_USER")
+                        .header("X-Gateway-Secret", "test-gateway-secret")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(statusDto)))
                 .andExpect(status().isOk())
@@ -122,7 +126,8 @@ class PedidoControllerTest {
 
         mockMvc.perform(put("/pedidos/1/pago")
                         .header("X-Auth-User-Email", "admin@alurafood.com")
-                        .header("X-Auth-User-Role", "ROLE_USER"))
+                        .header("X-Auth-User-Role", "ROLE_USER")
+                        .header("X-Gateway-Secret", "test-gateway-secret"))
                 .andExpect(status().isOk());
 
         verify(service).aprovaPagamentoPedido(1L);

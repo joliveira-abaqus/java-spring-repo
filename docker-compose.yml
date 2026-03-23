@@ -73,6 +73,7 @@ services:
       SERVER_PORT: 8082
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
       JWT_SECRET: ${JWT_SECRET:-YWx1cmFmb29kLXNlY3JldC1rZXktand0LXNlY3VyaXR5LTI1Ni1iaXRzLW1pbmltdW0=}
+      GATEWAY_SECRET: ${GATEWAY_SECRET:-minha-chave-secreta-gateway-2025}
 
   pagamentos:
     build: ./pagamentos
@@ -89,6 +90,7 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
+      GATEWAY_SECRET: ${GATEWAY_SECRET:-minha-chave-secreta-gateway-2025}
 
   pedidos:
     build: ./pedidos
@@ -105,6 +107,7 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
+      GATEWAY_SECRET: ${GATEWAY_SECRET:-minha-chave-secreta-gateway-2025}
 
 volumes:
   mysql-pagamentos-data:

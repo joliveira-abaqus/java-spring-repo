@@ -11,6 +11,8 @@ spring:
     enabled: true
 server:
   port: 0
+gateway:
+  secret: ${GATEWAY_SECRET:minha-chave-secreta-gateway-2025}
 eureka:
   client:
     service-url:

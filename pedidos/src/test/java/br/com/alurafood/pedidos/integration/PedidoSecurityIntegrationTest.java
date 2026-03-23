@@ -26,6 +26,7 @@ class PedidoSecurityIntegrationTest {
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Auth-User-Email", "admin@alurafood.com");
         headers.set("X-Auth-User-Role", "ROLE_USER");
+        headers.set("X-Gateway-Secret", "test-gateway-secret");
         headers.setContentType(MediaType.APPLICATION_JSON);
         return headers;
     }

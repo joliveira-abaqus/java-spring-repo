@@ -27,6 +27,10 @@ public class FeignClientInterceptor implements RequestInterceptor {
             if (userRole != null) {
                 template.header("X-Auth-User-Role", userRole);
             }
+            String gatewaySecret = request.getHeader("X-Gateway-Secret");
+            if (gatewaySecret != null) {
+                template.header("X-Gateway-Secret", gatewaySecret);
+            }
         }
     }
 }

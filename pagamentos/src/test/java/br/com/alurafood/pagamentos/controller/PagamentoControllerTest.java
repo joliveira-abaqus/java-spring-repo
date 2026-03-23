@@ -63,7 +63,8 @@ class PagamentoControllerTest {
 
         mockMvc.perform(get("/pagamentos")
                         .header("X-Auth-User-Email", "admin@alurafood.com")
-                        .header("X-Auth-User-Role", "ROLE_USER"))
+                        .header("X-Auth-User-Role", "ROLE_USER")
+                        .header("X-Gateway-Secret", "test-gateway-secret"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(1));
     }
@@ -74,7 +75,8 @@ class PagamentoControllerTest {
 
         mockMvc.perform(get("/pagamentos/1")
                         .header("X-Auth-User-Email", "admin@alurafood.com")
-                        .header("X-Auth-User-Role", "ROLE_USER"))
+                        .header("X-Auth-User-Role", "ROLE_USER")
+                        .header("X-Gateway-Secret", "test-gateway-secret"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.nome").value("Test User"));
@@ -87,6 +89,7 @@ class PagamentoControllerTest {
         mockMvc.perform(post("/pagamentos")
                         .header("X-Auth-User-Email", "admin@alurafood.com")
                         .header("X-Auth-User-Role", "ROLE_USER")
+                        .header("X-Gateway-Secret", "test-gateway-secret")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(pagamentoDto)))
                 .andExpect(status().isCreated())
@@ -101,6 +104,7 @@ class PagamentoControllerTest {
         mockMvc.perform(put("/pagamentos/1")
                         .header("X-Auth-User-Email", "admin@alurafood.com")
                         .header("X-Auth-User-Role", "ROLE_USER")
+                        .header("X-Gateway-Secret", "test-gateway-secret")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(pagamentoDto)))
                 .andExpect(status().isOk())
@@ -113,7 +117,8 @@ class PagamentoControllerTest {
 
         mockMvc.perform(delete("/pagamentos/1")
                         .header("X-Auth-User-Email", "admin@alurafood.com")
-                        .header("X-Auth-User-Role", "ROLE_USER"))
+                        .header("X-Auth-User-Role", "ROLE_USER")
+                        .header("X-Gateway-Secret", "test-gateway-secret"))
                 .andExpect(status().isNoContent());
 
         verify(service).excluirPagamento(1L);
@@ -125,7 +130,8 @@ class PagamentoControllerTest {
 
         mockMvc.perform(patch("/pagamentos/1/confirmar")
                         .header("X-Auth-User-Email", "admin@alurafood.com")
-                        .header("X-Auth-User-Role", "ROLE_USER"))
+                        .header("X-Auth-User-Role", "ROLE_USER")
+                        .header("X-Gateway-Secret", "test-gateway-secret"))
                 .andExpect(status().isOk());
 
         verify(service).confirmarPagamento(1L);

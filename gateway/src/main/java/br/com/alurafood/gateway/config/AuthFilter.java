@@ -27,6 +27,9 @@ public class AuthFilter implements GlobalFilter, Ordered {
     @Value("${jwt.secret}")
     private String secret;
 
+    @Value("${gateway.secret}")
+    private String gatewaySecret;
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
@@ -52,6 +55,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             ServerHttpRequest requestModificado = request.mutate()
                     .header("X-Auth-User-Email", claims.getSubject())
                     .header("X-Auth-User-Role", claims.get("role", String.class))
+                    .header("X-Gateway-Secret", gatewaySecret)
                     .build();
 
             return chain.filter(exchange.mutate().request(requestModificado).build());
