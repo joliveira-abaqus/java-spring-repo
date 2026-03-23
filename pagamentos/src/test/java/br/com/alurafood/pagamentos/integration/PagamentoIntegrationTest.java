@@ -8,10 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
@@ -29,6 +26,15 @@ class PagamentoIntegrationTest {
     @MockitoBean
     private PedidoClient pedidoClient;
 
+    private HttpHeaders criarHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Auth-User-Email", "admin@alurafood.com");
+        headers.set("X-Auth-User-Role", "ROLE_USER");
+        headers.set("X-Gateway-Secret", "test-gateway-secret");
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
+    }
+
     private PagamentoDto criarPagamentoDto() {
         PagamentoDto dto = new PagamentoDto();
         dto.setValor(new BigDecimal("100.00"));
@@ -45,9 +51,10 @@ class PagamentoIntegrationTest {
     @Test
     void deveCriarPagamentoComSucesso() {
         PagamentoDto dto = criarPagamentoDto();
+        HttpEntity<PagamentoDto> entity = new HttpEntity<>(dto, criarHeaders());
 
-        ResponseEntity<PagamentoDto> response = restTemplate.postForEntity(
-                "/pagamentos", dto, PagamentoDto.class);
+        ResponseEntity<PagamentoDto> response = restTemplate.exchange(
+                "/pagamentos", HttpMethod.POST, entity, PagamentoDto.class);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -58,13 +65,15 @@ class PagamentoIntegrationTest {
     @Test
     void deveConsultarPagamentoPorId() {
         PagamentoDto dto = criarPagamentoDto();
-        ResponseEntity<PagamentoDto> criado = restTemplate.postForEntity(
-                "/pagamentos", dto, PagamentoDto.class);
+        HttpEntity<PagamentoDto> createEntity = new HttpEntity<>(dto, criarHeaders());
+        ResponseEntity<PagamentoDto> criado = restTemplate.exchange(
+                "/pagamentos", HttpMethod.POST, createEntity, PagamentoDto.class);
 
         Long id = criado.getBody().getId();
 
-        ResponseEntity<PagamentoDto> response = restTemplate.getForEntity(
-                "/pagamentos/" + id, PagamentoDto.class);
+        HttpEntity<Void> getEntity = new HttpEntity<>(criarHeaders());
+        ResponseEntity<PagamentoDto> response = restTemplate.exchange(
+                "/pagamentos/" + id, HttpMethod.GET, getEntity, PagamentoDto.class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -76,21 +85,24 @@ class PagamentoIntegrationTest {
         doNothing().when(pedidoClient).atualizaPagamento(1L);
 
         PagamentoDto dto = criarPagamentoDto();
-        ResponseEntity<PagamentoDto> criado = restTemplate.postForEntity(
-                "/pagamentos", dto, PagamentoDto.class);
+        HttpEntity<PagamentoDto> createEntity = new HttpEntity<>(dto, criarHeaders());
+        ResponseEntity<PagamentoDto> criado = restTemplate.exchange(
+                "/pagamentos", HttpMethod.POST, createEntity, PagamentoDto.class);
 
         Long id = criado.getBody().getId();
 
+        HttpEntity<Void> confirmEntity = new HttpEntity<>(criarHeaders());
         ResponseEntity<Void> confirmResponse = restTemplate.exchange(
                 "/pagamentos/" + id + "/confirmar",
                 HttpMethod.PATCH,
-                null,
+                confirmEntity,
                 Void.class);
 
         assertEquals(HttpStatus.OK, confirmResponse.getStatusCode());
 
-        ResponseEntity<PagamentoDto> consultado = restTemplate.getForEntity(
-                "/pagamentos/" + id, PagamentoDto.class);
+        HttpEntity<Void> getEntity = new HttpEntity<>(criarHeaders());
+        ResponseEntity<PagamentoDto> consultado = restTemplate.exchange(
+                "/pagamentos/" + id, HttpMethod.GET, getEntity, PagamentoDto.class);
 
         assertEquals(Status.CONFIRMADO, consultado.getBody().getStatus());
     }
@@ -98,8 +110,9 @@ class PagamentoIntegrationTest {
     @Test
     void deveAtualizarPagamento() {
         PagamentoDto dto = criarPagamentoDto();
-        ResponseEntity<PagamentoDto> criado = restTemplate.postForEntity(
-                "/pagamentos", dto, PagamentoDto.class);
+        HttpEntity<PagamentoDto> createEntity = new HttpEntity<>(dto, criarHeaders());
+        ResponseEntity<PagamentoDto> criado = restTemplate.exchange(
+                "/pagamentos", HttpMethod.POST, createEntity, PagamentoDto.class);
 
         Long id = criado.getBody().getId();
 
@@ -107,10 +120,11 @@ class PagamentoIntegrationTest {
         atualizado.setValor(new BigDecimal("200.00"));
         atualizado.setNome("Updated User");
 
+        HttpEntity<PagamentoDto> updateEntity = new HttpEntity<>(atualizado, criarHeaders());
         ResponseEntity<PagamentoDto> response = restTemplate.exchange(
                 "/pagamentos/" + id,
                 HttpMethod.PUT,
-                new HttpEntity<>(atualizado),
+                updateEntity,
                 PagamentoDto.class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -120,15 +134,18 @@ class PagamentoIntegrationTest {
     @Test
     void deveExcluirPagamento() {
         PagamentoDto dto = criarPagamentoDto();
-        ResponseEntity<PagamentoDto> criado = restTemplate.postForEntity(
-                "/pagamentos", dto, PagamentoDto.class);
+        HttpEntity<PagamentoDto> createEntity = new HttpEntity<>(dto, criarHeaders());
+        ResponseEntity<PagamentoDto> criado = restTemplate.exchange(
+                "/pagamentos", HttpMethod.POST, createEntity, PagamentoDto.class);
 
         Long id = criado.getBody().getId();
 
-        restTemplate.delete("/pagamentos/" + id);
+        HttpEntity<Void> deleteEntity = new HttpEntity<>(criarHeaders());
+        restTemplate.exchange("/pagamentos/" + id, HttpMethod.DELETE, deleteEntity, Void.class);
 
-        ResponseEntity<String> response = restTemplate.getForEntity(
-                "/pagamentos/" + id, String.class);
+        HttpEntity<Void> getEntity = new HttpEntity<>(criarHeaders());
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/pagamentos/" + id, HttpMethod.GET, getEntity, String.class);
 
         // After deletion, getting the resource should return an error
         assertNotEquals(HttpStatus.OK, response.getStatusCode());

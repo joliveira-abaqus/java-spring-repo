@@ -24,12 +24,41 @@ services:
       - mysql-pedidos-data:/var/lib/mysql
     restart: always
 
+  mysql-auth:
+    image: mysql:8.0
+    container_name: mysql-auth
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
+      MYSQL_DATABASE: alurafood-auth
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql-auth-data:/var/lib/mysql
+    restart: always
+
   server:
     build: ./server
     container_name: eureka-server
     ports:
       - "8081:8081"
     restart: always
+
+  auth:
+    build: ./auth
+    container_name: auth-ms
+    ports:
+      - "8085:8085"
+    restart: always
+    depends_on:
+      - server
+      - mysql-auth
+    environment:
+      SERVER_PORT: 8085
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-auth:3306/alurafood-auth?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
+      JWT_SECRET: ${JWT_SECRET:-YWx1cmFmb29kLXNlY3JldC1rZXktand0LXNlY3VyaXR5LTI1Ni1iaXRzLW1pbmltdW0=}
 
   gateway:
     build: ./gateway
@@ -39,9 +68,12 @@ services:
     restart: always
     depends_on:
       - server
+      - auth
     environment:
       SERVER_PORT: 8082
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
+      JWT_SECRET: ${JWT_SECRET:-YWx1cmFmb29kLXNlY3JldC1rZXktand0LXNlY3VyaXR5LTI1Ni1iaXRzLW1pbmltdW0=}
+      GATEWAY_SECRET: ${GATEWAY_SECRET:-minha-chave-secreta-gateway-2025}
 
   pagamentos:
     build: ./pagamentos
@@ -58,6 +90,7 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
+      GATEWAY_SECRET: ${GATEWAY_SECRET:-minha-chave-secreta-gateway-2025}
 
   pedidos:
     build: ./pedidos
@@ -74,7 +107,9 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
+      GATEWAY_SECRET: ${GATEWAY_SECRET:-minha-chave-secreta-gateway-2025}
 
 volumes:
   mysql-pagamentos-data:
   mysql-pedidos-data:
+  mysql-auth-data:

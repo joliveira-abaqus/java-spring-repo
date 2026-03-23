@@ -1,5 +1,7 @@
 package br.com.alurafood.pedidos.controller;
 
+import br.com.alurafood.pedidos.config.GatewayAuthFilter;
+import br.com.alurafood.pedidos.config.SecurityConfig;
 import br.com.alurafood.pedidos.dto.ItemDoPedidoDto;
 import br.com.alurafood.pedidos.dto.PedidoDto;
 import br.com.alurafood.pedidos.dto.StatusDto;
@@ -10,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,6 +28,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(PedidoController.class)
+@Import({SecurityConfig.class, GatewayAuthFilter.class})
 class PedidoControllerTest {
 
     @Autowired
@@ -56,7 +60,10 @@ class PedidoControllerTest {
     void listarTodos_deveRetornarListaDePedidos() throws Exception {
         when(service.obterTodos()).thenReturn(List.of(pedidoDto));
 
-        mockMvc.perform(get("/pedidos"))
+        mockMvc.perform(get("/pedidos")
+                        .header("X-Auth-User-Email", "admin@alurafood.com")
+                        .header("X-Auth-User-Role", "ROLE_USER")
+                        .header("X-Gateway-Secret", "test-gateway-secret"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].status").value("REALIZADO"));
@@ -66,7 +73,10 @@ class PedidoControllerTest {
     void listarPorId_deveRetornarPedidoPorId() throws Exception {
         when(service.obterPorId(1L)).thenReturn(pedidoDto);
 
-        mockMvc.perform(get("/pedidos/1"))
+        mockMvc.perform(get("/pedidos/1")
+                        .header("X-Auth-User-Email", "admin@alurafood.com")
+                        .header("X-Auth-User-Role", "ROLE_USER")
+                        .header("X-Gateway-Secret", "test-gateway-secret"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.status").value("REALIZADO"));
@@ -77,6 +87,9 @@ class PedidoControllerTest {
         when(service.criarPedido(any(PedidoDto.class))).thenReturn(pedidoDto);
 
         mockMvc.perform(post("/pedidos")
+                        .header("X-Auth-User-Email", "admin@alurafood.com")
+                        .header("X-Auth-User-Role", "ROLE_USER")
+                        .header("X-Gateway-Secret", "test-gateway-secret")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(pedidoDto)))
                 .andExpect(status().isCreated())
@@ -98,6 +111,9 @@ class PedidoControllerTest {
         when(service.atualizaStatus(eq(1L), any(StatusDto.class))).thenReturn(atualizado);
 
         mockMvc.perform(put("/pedidos/1/status")
+                        .header("X-Auth-User-Email", "admin@alurafood.com")
+                        .header("X-Auth-User-Role", "ROLE_USER")
+                        .header("X-Gateway-Secret", "test-gateway-secret")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(statusDto)))
                 .andExpect(status().isOk())
@@ -108,7 +124,10 @@ class PedidoControllerTest {
     void aprovaPagamento_deveAprovarPagamentoDoPedido() throws Exception {
         doNothing().when(service).aprovaPagamentoPedido(1L);
 
-        mockMvc.perform(put("/pedidos/1/pago"))
+        mockMvc.perform(put("/pedidos/1/pago")
+                        .header("X-Auth-User-Email", "admin@alurafood.com")
+                        .header("X-Auth-User-Role", "ROLE_USER")
+                        .header("X-Gateway-Secret", "test-gateway-secret"))
                 .andExpect(status().isOk());
 
         verify(service).aprovaPagamentoPedido(1L);
