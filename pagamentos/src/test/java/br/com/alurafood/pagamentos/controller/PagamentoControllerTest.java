@@ -1,5 +1,7 @@
 package br.com.alurafood.pagamentos.controller;
 
+import br.com.alurafood.pagamentos.config.GatewayAuthFilter;
+import br.com.alurafood.pagamentos.config.SecurityConfig;
 import br.com.alurafood.pagamentos.dto.PagamentoDto;
 import br.com.alurafood.pagamentos.model.Status;
 import br.com.alurafood.pagamentos.service.PagamentoService;
@@ -8,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -25,6 +28,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(PagamentoController.class)
+@Import({SecurityConfig.class, GatewayAuthFilter.class})
 class PagamentoControllerTest {
 
     @Autowired
@@ -57,7 +61,9 @@ class PagamentoControllerTest {
         Page<PagamentoDto> page = new PageImpl<>(List.of(pagamentoDto));
         when(service.obterTodos(any(Pageable.class))).thenReturn(page);
 
-        mockMvc.perform(get("/pagamentos"))
+        mockMvc.perform(get("/pagamentos")
+                        .header("X-Auth-User-Email", "admin@alurafood.com")
+                        .header("X-Auth-User-Role", "ROLE_USER"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(1));
     }
@@ -66,7 +72,9 @@ class PagamentoControllerTest {
     void detalhar_deveRetornarPagamentoPorId() throws Exception {
         when(service.obterPorId(1L)).thenReturn(pagamentoDto);
 
-        mockMvc.perform(get("/pagamentos/1"))
+        mockMvc.perform(get("/pagamentos/1")
+                        .header("X-Auth-User-Email", "admin@alurafood.com")
+                        .header("X-Auth-User-Role", "ROLE_USER"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.nome").value("Test User"));
@@ -77,6 +85,8 @@ class PagamentoControllerTest {
         when(service.criarPagamento(any(PagamentoDto.class))).thenReturn(pagamentoDto);
 
         mockMvc.perform(post("/pagamentos")
+                        .header("X-Auth-User-Email", "admin@alurafood.com")
+                        .header("X-Auth-User-Role", "ROLE_USER")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(pagamentoDto)))
                 .andExpect(status().isCreated())
@@ -89,6 +99,8 @@ class PagamentoControllerTest {
         when(service.atualizarPagamento(eq(1L), any(PagamentoDto.class))).thenReturn(pagamentoDto);
 
         mockMvc.perform(put("/pagamentos/1")
+                        .header("X-Auth-User-Email", "admin@alurafood.com")
+                        .header("X-Auth-User-Role", "ROLE_USER")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(pagamentoDto)))
                 .andExpect(status().isOk())
@@ -99,7 +111,9 @@ class PagamentoControllerTest {
     void remover_deveRemoverPagamento() throws Exception {
         doNothing().when(service).excluirPagamento(1L);
 
-        mockMvc.perform(delete("/pagamentos/1"))
+        mockMvc.perform(delete("/pagamentos/1")
+                        .header("X-Auth-User-Email", "admin@alurafood.com")
+                        .header("X-Auth-User-Role", "ROLE_USER"))
                 .andExpect(status().isNoContent());
 
         verify(service).excluirPagamento(1L);
@@ -109,7 +123,9 @@ class PagamentoControllerTest {
     void confirmarPagamento_deveConfirmarPagamento() throws Exception {
         doNothing().when(service).confirmarPagamento(1L);
 
-        mockMvc.perform(patch("/pagamentos/1/confirmar"))
+        mockMvc.perform(patch("/pagamentos/1/confirmar")
+                        .header("X-Auth-User-Email", "admin@alurafood.com")
+                        .header("X-Auth-User-Role", "ROLE_USER"))
                 .andExpect(status().isOk());
 
         verify(service).confirmarPagamento(1L);
