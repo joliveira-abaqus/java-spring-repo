@@ -7,7 +7,7 @@ Projeto de microsserviços com Java e Spring, atualizado para as versões mais r
 
 | Tecnologia | Versão |
 |------------|--------|
-| Java | 25 |
+| Java | 21 |
 | Spring Boot | 3.5.0 |
 | Spring Cloud | 2025.0.1 |
 | Resilience4j | 2.3.0 |
@@ -16,7 +16,7 @@ Projeto de microsserviços com Java e Spring, atualizado para as versões mais r
 
 ## Pré-requisitos
 
-- **Java 25** (Eclipse Temurin recomendado)
+- **Java 21** (Eclipse Temurin recomendado)
 - **Docker** e **Docker Compose** (para execução com containers)
 - **MySQL 8.0** (para execução local sem Docker)
 
