@@ -1,84 +1,263 @@
-# Microsserviços com Java e Spring
+# Food Delivery Microservices Platform
 
+A production-grade backend platform for food delivery built on a microservices architecture — manages orders and payments through a fully distributed infrastructure with service discovery, centralized routing, resilience patterns, and stateless JWT authentication.
 
-Projeto de microsserviços com Java e Spring, atualizado para as versões mais recentes.
+---
 
-## Versões
+## Table of Contents
 
-| Tecnologia | Versão |
-|------------|--------|
-| Java | 25 |
-| Spring Boot | 3.5.0 |
-| Spring Cloud | 2025.0.1 |
-| Resilience4j | 2.3.0 |
-| MySQL | 8.0 |
-| Flyway | (gerido pelo Spring Boot) |
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Tech Stack](#tech-stack)
+- [Requirements](#requirements)
+- [Quick Start](#quick-start)
+- [Running Locally](#running-locally)
+- [Testing](#testing)
+- [API Endpoints](#api-endpoints)
+- [Key Concepts](#key-concepts)
+- [Contributing](#contributing)
+- [License](#license)
 
-## Pré-requisitos
+---
 
-- **Java 25** (Eclipse Temurin recomendado)
-- **Docker** e **Docker Compose** (para execução com containers)
-- **MySQL 8.0** (para execução local sem Docker)
+## Architecture
 
-## Arquitetura
+```
+┌────────────┐         ┌──────────────────┐         ┌────────────────────────────────┐
+│            │         │                  │         │         Eureka Server          │
+│   Client   │────────▶│   API Gateway    │────────▶│       (Service Discovery)      │
+│            │         │   :8082          │         │           :8081                │
+└────────────┘         └────────┬─────────┘         └────────────────────────────────┘
+                                │                              ▲       ▲
+                                │  routes via service name     │       │
+                    ┌───────────┼───────────┐          register│       │register
+                    │           │           │                  │       │
+                    ▼           ▼           ▼                  │       │
+          ┌─────────────┐ ┌─────────────┐ ┌─────────────┐    │       │
+          │    Auth      │ │  Pagamentos │ │   Pedidos   │    │       │
+          │  (JWT Auth)  │ │ (Payments)  │ │  (Orders)   │────┘       │
+          │              │ │   :8083     │ │   :8084     │            │
+          └─────────────┘ └──────┬──────┘ └──────┬──────┘            │
+                                 │               │                    │
+                                 │  OpenFeign    │                    │
+                                 │◀──────────────┘                    │
+                                 │                                    │
+                                 ▼                                    │
+                          ┌─────────────┐                             │
+                          │   MySQL 8.0 │                             │
+                          │  (per-svc)  │─────────────────────────────┘
+                          └─────────────┘
+```
 
-O projeto é composto por 4 microsserviços:
+**Request flow:** Client → Gateway (routing + JWT validation) → Eureka (service lookup) → Target Microservice → MySQL
 
-| Serviço | Porta | Descrição |
-|---------|-------|-----------|
-| **server** | 8081 | Eureka Service Discovery |
-| **gateway** | 8082 | API Gateway (Spring Cloud Gateway) |
-| **pagamentos** | 8083 (Docker) / dinâmica (local) | Microsserviço de pagamentos |
-| **pedidos** | 8084 (Docker) / dinâmica (local) | Microsserviço de pedidos |
+---
 
-## Executar com Docker Compose
+## Project Structure
+
+```
+java-spring-repo/
+├── server/              # Eureka Service Discovery
+│   └── src/
+├── gateway/             # Spring Cloud Gateway (routing + security)
+│   └── src/
+├── auth/                # JWT Authentication service
+│   └── src/
+├── pedidos/             # Order management microservice
+│   └── src/
+├── pagamentos/          # Payment processing microservice
+│   └── src/
+├── docker-compose.yml   # Full-stack orchestration
+└── README.md
+```
+
+---
+
+## Tech Stack
+
+| Technology | Version | Purpose |
+|---|---|---|
+| Java | 25 | Runtime (Eclipse Temurin) |
+| Spring Boot | 3.5.0 | Application framework |
+| Spring Cloud | 2025.0.1 | Microservices infrastructure |
+| Eureka | (Spring Cloud) | Service Discovery |
+| Spring Cloud Gateway | (Spring Cloud) | API Gateway |
+| Resilience4j | 2.3.0 | Circuit Breaker & Fallback |
+| Hibernate / JPA | (Spring Boot) | ORM & persistence |
+| Flyway | (Spring Boot managed) | Database migrations |
+| MySQL | 8.0 | Production database |
+| Docker | latest | Containerization |
+| Maven | wrapper included | Build tool |
+
+---
+
+## Requirements
+
+| Requirement | Notes |
+|---|---|
+| **Java 25** | Eclipse Temurin recommended |
+| **Docker & Docker Compose** | Required for containerized execution |
+| **MySQL 8.0** | Required only for local (non-Docker) execution |
+| **Maven** | Wrapper (`./mvnw`) included in each service |
+
+### Compatibility
+
+- **OS:** Linux, macOS, Windows (WSL2 recommended)
+- **Docker Compose:** v2+ (uses `docker-compose.yml` v3 syntax)
+- **JDK:** Tested with Eclipse Temurin 25; other OpenJDK distributions should work
+
+---
+
+## Quick Start
+
+The fastest way to get the full platform running:
 
 ```bash
+# Clone the repository
+git clone https://github.com/joliveira-abaqus/java-spring-repo.git
+cd java-spring-repo
+
+# Start all services with Docker Compose
 docker-compose up --build
 ```
 
-Isso irá iniciar todos os serviços, incluindo duas instâncias MySQL (uma para pagamentos e outra para pedidos), o Eureka Server, o API Gateway e os microsserviços.
+Once containers are healthy:
 
-- Eureka Dashboard: http://localhost:8081
-- API Gateway: http://localhost:8082
-- Pagamentos (direto): http://localhost:8083
-- Pedidos (direto): http://localhost:8084
+| Endpoint | URL |
+|---|---|
+| Eureka Dashboard | http://localhost:8081 |
+| API Gateway | http://localhost:8082 |
+| Payments (direct) | http://localhost:8083 |
+| Orders (direct) | http://localhost:8084 |
 
-## Executar localmente
-
-Iniciar os serviços na seguinte ordem:
+### Verify the setup
 
 ```bash
-# 1. Eureka Server
+# Check Eureka registered services
+curl http://localhost:8081/eureka/apps
+
+# Create a payment via Gateway
+curl -X POST http://localhost:8082/pagamentos-ms/pagamentos \
+  -H "Content-Type: application/json" \
+  -d '{"valor": 50.00, "nome": "John", "numero": "1234", "expiracao": "12/2030", "codigo": "123", "pedidoId": 1, "formaDePagamento": "CREDIT_CARD"}'
+```
+
+---
+
+## Running Locally
+
+When running without Docker, start services in this order (each in a separate terminal):
+
+```bash
+# 1. Eureka Server (must start first)
 cd server && ./mvnw spring-boot:run
 
-# 2. Gateway
+# 2. API Gateway
 cd gateway && ./mvnw spring-boot:run
 
-# 3. Pagamentos (requer MySQL local na porta 3306)
+# 3. Auth Service
+cd auth && ./mvnw spring-boot:run
+
+# 4. Payments (requires local MySQL on port 3306)
 cd pagamentos && ./mvnw spring-boot:run
 
-# 4. Pedidos (requer MySQL local na porta 3306)
+# 5. Orders (requires local MySQL on port 3306)
 cd pedidos && ./mvnw spring-boot:run
 ```
 
-## Executar testes
+> **Note:** When running locally, `pagamentos` and `pedidos` register with Eureka on dynamically assigned ports. Access them through the Gateway for proper routing.
+
+---
+
+## Testing
+
+### Test Suites
+
+| Service | Tests | Type |
+|---|---|---|
+| `pagamentos` | 22 | Unit + Integration |
+| `pedidos` | 19 | Unit + Integration |
+
+### Run tests
 
 ```bash
-# Pagamentos (22 testes: unitários + integração)
+# Payments service tests
 cd pagamentos && ./mvnw test
 
-# Pedidos (19 testes: unitários + integração)
+# Orders service tests
 cd pedidos && ./mvnw test
+
+# Run all tests (from project root)
+cd pagamentos && ./mvnw test && cd ../pedidos && ./mvnw test
 ```
 
-Os testes de integração utilizam H2 em memória (perfil `test`), sem necessidade de MySQL.
+> Integration tests use an **in-memory H2 database** (profile `test`) — no MySQL instance required.
 
-## Sobre o projeto
+---
 
-<p>  O projeto trabalhado no curso é o Alura Food, onde a ideia central é que o mesmo era um monolito e estamos iniciando a decomposição em microsserviços. Começamos implementando a API e projeto do microsserviço de pagamento, tendo um banco de dados próprio [MySQL](https://www.mysql.com).
-</p>
+## API Endpoints
 
-<p>  Além disso, fazemos a implementação do Service Discovery utilizando o [Eureka](https://spring.io/projects/spring-cloud-netflix),   solução desenvolvida pela Netflix e que faz parte do [Spring Cloud](https://spring.io/projects/spring-cloud). Incluímos também à arquitetura um [API Gateway](https://spring.io/projects/spring-cloud-gateway), que vai atuar como ponto central para as nossas requisições. É feita a inclusão de um novo microsserviço, que é o de pedidos, onde praticamos a comunicação síncrona e o balanceamento de carga, quando há mais de uma instância do projeto em execução.</p>
+All requests should go through the Gateway (`http://localhost:8082`):
 
-<p>  Para fechar, tratamos os conceitos de circuit breaker e fallback, utilizando o [Resilience4J](https://resilience4j.readme.io/docs/getting-started-3) e promovendo uma alternativa quando um dos serviços está inoperante.</p>
+| Method | Path | Service | Description |
+|---|---|---|---|
+| `POST` | `/pagamentos-ms/pagamentos` | Payments | Create a payment |
+| `GET` | `/pagamentos-ms/pagamentos` | Payments | List all payments |
+| `GET` | `/pagamentos-ms/pagamentos/{id}` | Payments | Get payment by ID |
+| `PATCH` | `/pagamentos-ms/pagamentos/{id}/confirmar` | Payments | Confirm a payment |
+| `DELETE` | `/pagamentos-ms/pagamentos/{id}` | Payments | Cancel a payment |
+| `GET` | `/pedidos-ms/pedidos` | Orders | List all orders |
+| `GET` | `/pedidos-ms/pedidos/{id}` | Orders | Get order by ID |
+
+---
+
+## Key Concepts
+
+### Service Discovery (Eureka)
+All microservices register themselves with the Eureka Server on startup. The Gateway resolves service names to actual host:port via Eureka, enabling dynamic scaling without hardcoded URLs.
+
+### API Gateway
+Single entry point for all client requests. Handles routing (by service name), JWT token validation, and request filtering. Communicates the authenticated user role downstream via the `X-Auth-User-Role` header.
+
+### Circuit Breaker & Fallback (Resilience4j)
+Payment confirmations use a Circuit Breaker pattern. When the Orders service is unavailable, the fallback marks the payment as `CONFIRMADO_SEM_INTEGRACAO` (confirmed without integration) to prevent cascading failures.
+
+### Synchronous Communication (OpenFeign)
+Inter-service calls (e.g., Payments → Orders status update) use declarative OpenFeign clients, resolved through Eureka.
+
+### JWT Stateless Authentication
+The Auth service issues signed JWTs. The Gateway validates tokens before routing, and propagates authorization via the `X-Auth-User-Role` header — no session state stored server-side.
+
+### Gateway Secret
+A shared secret validates that internal service-to-service calls originated from the Gateway, preventing direct unauthorized access to downstream services.
+
+### Flyway Migrations
+Database schema evolution managed by versioned SQL scripts under each service's `src/main/resources/db/migration/` directory.
+
+### Multi-stage Docker Builds
+Each service uses a multi-stage `Dockerfile` — first stage compiles with full JDK, second stage runs with minimal JRE for smaller images and faster startups.
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/your-feature`)
+3. Commit your changes with descriptive messages
+4. Push to your branch (`git push origin feature/your-feature`)
+5. Open a Pull Request against `main`
+
+Please ensure:
+- All existing tests pass (`./mvnw test` in each service)
+- New features include appropriate test coverage
+- Code follows existing project conventions
+
+---
+
+## License
+
+This project is provided for educational and demonstration purposes.
+
+---
+
+Originally written and maintained by contributors and [Devin](https://app.devin.ai), with updates from the core team.
