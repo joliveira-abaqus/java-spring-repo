@@ -26,10 +26,10 @@ O projeto é composto por 4 microsserviços:
 
 | Serviço | Porta | Descrição |
 |---------|-------|-----------|
-| **server** | 8081 | Eureka Service Discovery |
-| **gateway** | 8082 | API Gateway (Spring Cloud Gateway) |
-| **pagamentos** | 8083 (Docker) / dinâmica (local) | Microsserviço de pagamentos |
-| **pedidos** | 8084 (Docker) / dinâmica (local) | Microsserviço de pedidos |
+| **server** | 9001 | Eureka Service Discovery |
+| **gateway** | 9002 | API Gateway (Spring Cloud Gateway) |
+| **pagamentos** | 9003 (Docker) / dinâmica (local) | Microsserviço de pagamentos |
+| **pedidos** | 9004 (Docker) / dinâmica (local) | Microsserviço de pedidos |
 
 ## Executar com Docker Compose
 
@@ -39,10 +39,10 @@ docker-compose up --build
 
 Isso irá iniciar todos os serviços, incluindo duas instâncias MySQL (uma para pagamentos e outra para pedidos), o Eureka Server, o API Gateway e os microsserviços.
 
-- Eureka Dashboard: http://localhost:8081
-- API Gateway: http://localhost:8082
-- Pagamentos (direto): http://localhost:8083
-- Pedidos (direto): http://localhost:8084
+- Eureka Dashboard: http://localhost:9001
+- API Gateway: http://localhost:9002
+- Pagamentos (direto): http://localhost:9003
+- Pedidos (direto): http://localhost:9004
 
 ## Executar localmente
 

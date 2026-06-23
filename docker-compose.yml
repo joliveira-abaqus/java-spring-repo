@@ -40,38 +40,38 @@ services:
     build: ./server
     container_name: eureka-server
     ports:
-      - "8081:8081"
+      - "9001:9001"
     restart: always
 
   auth:
     build: ./auth
     container_name: auth-ms
     ports:
-      - "8085:8085"
+      - "9005:9005"
     restart: always
     depends_on:
       - server
       - mysql-auth
     environment:
-      SERVER_PORT: 8085
+      SERVER_PORT: 9005
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-auth:3306/alurafood-auth?createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:9001/eureka
       JWT_SECRET: ${JWT_SECRET:-YWx1cmFmb29kLXNlY3JldC1rZXktand0LXNlY3VyaXR5LTI1Ni1iaXRzLW1pbmltdW0=}
 
   gateway:
     build: ./gateway
     container_name: api-gateway
     ports:
-      - "8082:8082"
+      - "9002:9002"
     restart: always
     depends_on:
       - server
       - auth
     environment:
-      SERVER_PORT: 8082
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
+      SERVER_PORT: 9002
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:9001/eureka
       JWT_SECRET: ${JWT_SECRET:-YWx1cmFmb29kLXNlY3JldC1rZXktand0LXNlY3VyaXR5LTI1Ni1iaXRzLW1pbmltdW0=}
       GATEWAY_SECRET: ${GATEWAY_SECRET:-minha-chave-secreta-gateway-2025}
 
@@ -79,34 +79,34 @@ services:
     build: ./pagamentos
     container_name: pagamentos-ms
     ports:
-      - "8083:8083"
+      - "9003:9003"
     restart: always
     depends_on:
       - gateway
       - mysql-pagamentos
     environment:
-      SERVER_PORT: 8083
+      SERVER_PORT: 9003
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-pagamentos:3306/alurafood-pagamento?createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:9001/eureka
       GATEWAY_SECRET: ${GATEWAY_SECRET:-minha-chave-secreta-gateway-2025}
 
   pedidos:
     build: ./pedidos
     container_name: pedidos-ms
     ports:
-      - "8084:8084"
+      - "9004:9004"
     restart: always
     depends_on:
       - gateway
       - mysql-pedidos
     environment:
-      SERVER_PORT: 8084
+      SERVER_PORT: 9004
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-pedidos:3306/alurafood-pedidos?createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:9001/eureka
       GATEWAY_SECRET: ${GATEWAY_SECRET:-minha-chave-secreta-gateway-2025}
 
 volumes:
