@@ -11,7 +11,7 @@
 ## 1. Acesso SEM token (deve retornar 401)
 
 ```bash
-curl -i http://localhost:8082/pagamentos-ms/pagamentos
+curl -i http://localhost:9502/pagamentos-ms/pagamentos
 ```
 
 **Esperado:** `401 Unauthorized`
@@ -21,7 +21,7 @@ curl -i http://localhost:8082/pagamentos-ms/pagamentos
 ## 2. Registrar um usuario
 
 ```bash
-curl -i -X POST http://localhost:8082/auth-ms/auth/registro \
+curl -i -X POST http://localhost:9502/auth-ms/auth/registro \
   -H "Content-Type: application/json" \
   -d '{"nome":"Admin","email":"admin@alurafood.com","senha":"123456"}'
 ```
@@ -42,7 +42,7 @@ curl -i -X POST http://localhost:8082/auth-ms/auth/registro \
 ## 3. Fazer login
 
 ```bash
-curl -i -X POST http://localhost:8082/auth-ms/auth/login \
+curl -i -X POST http://localhost:9502/auth-ms/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@alurafood.com","senha":"123456"}'
 ```
@@ -56,7 +56,7 @@ curl -i -X POST http://localhost:8082/auth-ms/auth/login \
 Substitua `<SEU_TOKEN>` pelo valor recebido no passo 2 ou 3.
 
 ```bash
-curl -i http://localhost:8082/pagamentos-ms/pagamentos \
+curl -i http://localhost:9502/pagamentos-ms/pagamentos \
   -H "Authorization: Bearer <SEU_TOKEN>"
 ```
 
@@ -67,7 +67,7 @@ curl -i http://localhost:8082/pagamentos-ms/pagamentos \
 ## 5. Acessar pedidos COM token valido
 
 ```bash
-curl -i http://localhost:8082/pedidos-ms/pedidos \
+curl -i http://localhost:9502/pedidos-ms/pedidos \
   -H "Authorization: Bearer <SEU_TOKEN>"
 ```
 
@@ -78,7 +78,7 @@ curl -i http://localhost:8082/pedidos-ms/pedidos \
 ## 6. Acesso com token INVALIDO (deve retornar 401)
 
 ```bash
-curl -i http://localhost:8082/pagamentos-ms/pagamentos \
+curl -i http://localhost:9502/pagamentos-ms/pagamentos \
   -H "Authorization: Bearer token_invalido_qualquer"
 ```
 
@@ -89,7 +89,7 @@ curl -i http://localhost:8082/pagamentos-ms/pagamentos \
 ## 7. Validar token diretamente
 
 ```bash
-curl -i "http://localhost:8082/auth-ms/auth/validar?token=<SEU_TOKEN>"
+curl -i "http://localhost:9502/auth-ms/auth/validar?token=<SEU_TOKEN>"
 ```
 
 **Esperado:** `200 OK` se valido, `401 Unauthorized` se invalido
@@ -99,7 +99,7 @@ curl -i "http://localhost:8082/auth-ms/auth/validar?token=<SEU_TOKEN>"
 ## 8. Registrar com email duplicado (deve falhar)
 
 ```bash
-curl -i -X POST http://localhost:8082/auth-ms/auth/registro \
+curl -i -X POST http://localhost:9502/auth-ms/auth/registro \
   -H "Content-Type: application/json" \
   -d '{"nome":"Admin2","email":"admin@alurafood.com","senha":"654321"}'
 ```
@@ -111,7 +111,7 @@ curl -i -X POST http://localhost:8082/auth-ms/auth/registro \
 ## 9. Login com senha errada (deve falhar)
 
 ```bash
-curl -i -X POST http://localhost:8082/auth-ms/auth/login \
+curl -i -X POST http://localhost:9502/auth-ms/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@alurafood.com","senha":"senhaerrada"}'
 ```

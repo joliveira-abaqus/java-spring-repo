@@ -10,11 +10,11 @@ spring:
   flyway:
     enabled: true
 server:
-  port: 8085
+  port: 9505
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8081/eureka
+      defaultZone: http://localhost:9501/eureka
 jwt:
   secret: ${JWT_SECRET:YWx1cmFmb29kLXNlY3JldC1rZXktand0LXNlY3VyaXR5LTI1Ni1iaXRzLW1pbmltdW0=}
   expiration: 86400000
