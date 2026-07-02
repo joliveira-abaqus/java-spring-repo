@@ -1,0 +1,7 @@
+gateway:
+  secret: test-gateway-secret
+jwt:
+  secret: YWx1cmFmb29kLXNlY3JldC1rZXktand0LXNlY3VyaXR5LTI1Ni1iaXRzLW1pbmltdW0=
+eureka:
+  client:
+    enabled: false

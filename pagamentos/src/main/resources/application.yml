@@ -16,7 +16,7 @@ eureka:
     service-url:
       defaultZone: http://localhost:8081/eureka
 gateway:
-  secret: ${GATEWAY_SECRET:minha-chave-secreta-gateway-2025}
+  secret: ${GATEWAY_SECRET}
 resilience4j:
   circuitbreaker:
     instances:

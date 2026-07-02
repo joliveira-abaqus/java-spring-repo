@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -29,6 +30,13 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
     @Value("${gateway.secret}")
     private String gatewaySecret;
+
+    @PostConstruct
+    void validateSecret() {
+        if (gatewaySecret == null || gatewaySecret.isBlank()) {
+            throw new IllegalStateException("gateway.secret não configurado — defina GATEWAY_SECRET como variável de ambiente");
+        }
+    }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
