@@ -22,25 +22,55 @@ Projeto de microsserviços com Java e Spring, atualizado para as versões mais r
 
 ## Arquitetura
 
-O projeto é composto por 4 microsserviços:
+O projeto é composto por 5 microsserviços:
 
 | Serviço | Porta | Descrição |
 |---------|-------|-----------|
 | **server** | 8081 | Eureka Service Discovery |
 | **gateway** | 8082 | API Gateway (Spring Cloud Gateway) |
+| **auth** | 8085 | Microsserviço de autenticação (JWT) |
 | **pagamentos** | 8083 (Docker) / dinâmica (local) | Microsserviço de pagamentos |
 | **pedidos** | 8084 (Docker) / dinâmica (local) | Microsserviço de pedidos |
 
+Cada microsserviço de negócio (`pagamentos`, `pedidos`, `auth`) possui seu próprio banco de dados MySQL, seguindo o padrão *database per service*.
+
+## Autenticação
+
+A autenticação é baseada em **JWT (JSON Web Token)**. O fluxo funciona da seguinte forma:
+
+1. O cliente se registra (`POST /auth/registro`) ou faz login (`POST /auth/login`) no microsserviço **auth** e recebe um token JWT.
+2. Nas requisições seguintes, o cliente envia o token no header `Authorization: Bearer <token>`.
+3. O **gateway** valida o token, extrai as informações do usuário e as propaga para os microsserviços internos via headers (`X-Auth-User-Email`, `X-Auth-User-Role`, `X-Gateway-Secret`).
+4. Os microsserviços internos aceitam apenas requisições que contenham o `X-Gateway-Secret` válido, garantindo que só o gateway consiga acessá-los diretamente.
+
+As rotas públicas (não exigem autenticação) são: `/auth/registro`, `/auth/login`, `/auth/validar` e `/eureka/**`.
+
+## Variáveis de ambiente
+
+Antes de executar o projeto, configure as seguintes variáveis de ambiente:
+
+| Variável | Obrigatória | Descrição |
+|----------|-------------|-----------|
+| `GATEWAY_SECRET` | Sim | Segredo compartilhado entre o gateway e os microsserviços internos |
+| `JWT_SECRET` | Não (possui padrão) | Chave (Base64) usada para assinar/validar os tokens JWT |
+| `MYSQL_ROOT_PASSWORD` | Não (padrão `changeme`) | Senha root das instâncias MySQL |
+
+> **Importante:** em produção, defina sempre `GATEWAY_SECRET` e `JWT_SECRET` com valores próprios e seguros. Não utilize os valores padrão de desenvolvimento.
+
 ## Executar com Docker Compose
 
+Defina primeiro as variáveis de ambiente obrigatórias (veja a seção acima) e depois execute:
+
 ```bash
+export GATEWAY_SECRET="seu-segredo-do-gateway"
 docker-compose up --build
 ```
 
-Isso irá iniciar todos os serviços, incluindo duas instâncias MySQL (uma para pagamentos e outra para pedidos), o Eureka Server, o API Gateway e os microsserviços.
+Isso irá iniciar todos os serviços, incluindo três instâncias MySQL (uma para pagamentos, uma para pedidos e uma para auth), o Eureka Server, o API Gateway e os microsserviços.
 
 - Eureka Dashboard: http://localhost:8081
 - API Gateway: http://localhost:8082
+- Auth (direto): http://localhost:8085
 - Pagamentos (direto): http://localhost:8083
 - Pedidos (direto): http://localhost:8084
 
@@ -55,10 +85,13 @@ cd server && ./mvnw spring-boot:run
 # 2. Gateway
 cd gateway && ./mvnw spring-boot:run
 
-# 3. Pagamentos (requer MySQL local na porta 3306)
+# 3. Auth (requer MySQL local)
+cd auth && ./mvnw spring-boot:run
+
+# 4. Pagamentos (requer MySQL local na porta 3306)
 cd pagamentos && ./mvnw spring-boot:run
 
-# 4. Pedidos (requer MySQL local na porta 3306)
+# 5. Pedidos (requer MySQL local na porta 3306)
 cd pedidos && ./mvnw spring-boot:run
 ```
 
