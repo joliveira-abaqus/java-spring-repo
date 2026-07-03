@@ -5,3 +5,22 @@ jwt:
 eureka:
   client:
     enabled: false
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+      routes:
+        - id: pedidos-test
+          uri: http://localhost:0
+          predicates:
+            - Path=/pedidos/**
+        - id: pagamentos-test
+          uri: http://localhost:0
+          predicates:
+            - Path=/pagamentos/**
+        - id: auth-test
+          uri: http://localhost:0
+          predicates:
+            - Path=/auth/**
