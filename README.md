@@ -22,27 +22,29 @@ Projeto de microsserviços com Java e Spring, atualizado para as versões mais r
 
 ## Arquitetura
 
-O projeto é composto por 4 microsserviços:
+O projeto é composto por 5 microsserviços:
 
 | Serviço | Porta | Descrição |
 |---------|-------|-----------|
 | **server** | 8081 | Eureka Service Discovery |
 | **gateway** | 8082 | API Gateway (Spring Cloud Gateway) |
+| **auth** | 8085 | Autenticação e emissão de tokens JWT |
 | **pagamentos** | 8083 (Docker) / dinâmica (local) | Microsserviço de pagamentos |
 | **pedidos** | 8084 (Docker) / dinâmica (local) | Microsserviço de pedidos |
 
 ## Executar com Docker Compose
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
-Isso irá iniciar todos os serviços, incluindo duas instâncias MySQL (uma para pagamentos e outra para pedidos), o Eureka Server, o API Gateway e os microsserviços.
+Isso irá iniciar todos os serviços, incluindo três instâncias MySQL (pagamentos, pedidos e autenticação), o Eureka Server, o API Gateway e os microsserviços. O Compose aguarda cada banco de dados e serviço necessário ficar saudável antes de iniciar seus dependentes.
+
+As credenciais padrão existem somente para desenvolvimento local. Em outros ambientes, defina `MYSQL_ROOT_PASSWORD`, `JWT_SECRET` e `GATEWAY_SECRET`.
 
 - Eureka Dashboard: http://localhost:8081
 - API Gateway: http://localhost:8082
-- Pagamentos (direto): http://localhost:8083
-- Pedidos (direto): http://localhost:8084
+- Auth (direto): http://localhost:8085
 
 ## Executar localmente
 

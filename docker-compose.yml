@@ -10,6 +10,12 @@ services:
       - "3306:3306"
     volumes:
       - mysql-pagamentos-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
     restart: always
 
   mysql-pedidos:
@@ -22,6 +28,12 @@ services:
       - "3307:3306"
     volumes:
       - mysql-pedidos-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
     restart: always
 
   mysql-auth:
@@ -34,6 +46,12 @@ services:
       - "3308:3306"
     volumes:
       - mysql-auth-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
     restart: always
 
   server:
@@ -41,6 +59,12 @@ services:
     container_name: eureka-server
     ports:
       - "8081:8081"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8081"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
     restart: always
 
   auth:
@@ -50,8 +74,10 @@ services:
       - "8085:8085"
     restart: always
     depends_on:
-      - server
-      - mysql-auth
+      server:
+        condition: service_healthy
+      mysql-auth:
+        condition: service_healthy
     environment:
       SERVER_PORT: 8085
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-auth:3306/alurafood-auth?createDatabaseIfNotExist=true
@@ -59,6 +85,12 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
       JWT_SECRET: ${JWT_SECRET:-YWx1cmFmb29kLXNlY3JldC1rZXktand0LXNlY3VyaXR5LTI1Ni1iaXRzLW1pbmltdW0=}
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8085"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
 
   gateway:
     build: ./gateway
@@ -67,13 +99,21 @@ services:
       - "8082:8082"
     restart: always
     depends_on:
-      - server
-      - auth
+      server:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
     environment:
       SERVER_PORT: 8082
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
       JWT_SECRET: ${JWT_SECRET:-YWx1cmFmb29kLXNlY3JldC1rZXktand0LXNlY3VyaXR5LTI1Ni1iaXRzLW1pbmltdW0=}
-      GATEWAY_SECRET: ${GATEWAY_SECRET}
+      GATEWAY_SECRET: ${GATEWAY_SECRET:-alurafood-gateway-local-dev-secret}
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8082"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
 
   pagamentos:
     build: ./pagamentos
@@ -82,15 +122,23 @@ services:
       - "8083"
     restart: always
     depends_on:
-      - gateway
-      - mysql-pagamentos
+      gateway:
+        condition: service_healthy
+      mysql-pagamentos:
+        condition: service_healthy
     environment:
       SERVER_PORT: 8083
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-pagamentos:3306/alurafood-pagamento?createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
-      GATEWAY_SECRET: ${GATEWAY_SECRET}
+      GATEWAY_SECRET: ${GATEWAY_SECRET:-alurafood-gateway-local-dev-secret}
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8083"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
 
   pedidos:
     build: ./pedidos
@@ -99,15 +147,23 @@ services:
       - "8084"
     restart: always
     depends_on:
-      - gateway
-      - mysql-pedidos
+      gateway:
+        condition: service_healthy
+      mysql-pedidos:
+        condition: service_healthy
     environment:
       SERVER_PORT: 8084
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-pedidos:3306/alurafood-pedidos?createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
-      GATEWAY_SECRET: ${GATEWAY_SECRET}
+      GATEWAY_SECRET: ${GATEWAY_SECRET:-alurafood-gateway-local-dev-secret}
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8084"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
 
 volumes:
   mysql-pagamentos-data:
