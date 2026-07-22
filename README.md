@@ -74,6 +74,78 @@ cd pedidos && ./mvnw test
 
 Os testes de integração utilizam H2 em memória (perfil `test`), sem necessidade de MySQL.
 
+## Monitoramento com Datadog
+
+O projeto está instrumentado para enviar **traces (APM)** e **métricas** para um
+**Datadog Agent** em execução na máquina do desenvolvedor (host). Nenhum segredo
+é commitado no repositório — a `DD_API_KEY` deve ser configurada apenas no Agent.
+
+### Duas camadas de observabilidade
+
+1. **APM / tracing (dd-java-agent)** — cada `Dockerfile` baixa o `dd-java-agent.jar`
+   e o `ENTRYPOINT` inclui `-javaagent:/app/dd-java-agent.jar`, ativando o tracing
+   automático de requisições HTTP, JDBC, Feign, etc.
+2. **Métricas (Micrometer + DogStatsD)** — cada serviço inclui a dependência
+   `io.micrometer:micrometer-registry-statsd` e exporta métricas para o DogStatsD
+   do Agent (porta UDP `8125`), no formato `datadog`.
+
+### Variáveis de ambiente
+
+Definidas por serviço no `docker-compose.yml`:
+
+| Variável | Valor | Descrição |
+|----------|-------|-----------|
+| `DD_SERVICE` | ex.: `pagamentos-ms` | Nome do serviço no Datadog |
+| `DD_ENV` | `dev` | Ambiente |
+| `DD_VERSION` | `0.0.1-SNAPSHOT` | Versão do serviço |
+| `DD_AGENT_HOST` | `host.docker.internal` | Host onde o Agent está rodando |
+| `DD_TRACE_ENABLED` | `true` | Habilita o tracing |
+| `DD_LOGS_INJECTION` | `true` | Injeta `trace_id`/`span_id` nos logs |
+
+No Linux, cada serviço define `extra_hosts: ["host.docker.internal:host-gateway"]`
+para que os containers alcancem o Agent no host.
+
+O DogStatsD usa o mesmo `DD_AGENT_HOST` (porta `8125`). Sem Docker, o padrão é
+`localhost:8125`.
+
+### Configurar o Datadog Agent no host
+
+A **API key nunca deve ser commitada**. Configure-a apenas no Agent:
+
+```bash
+docker run -d --name datadog-agent \
+  -e DD_API_KEY=<SUA_API_KEY> \
+  -e DD_SITE=datadoghq.com \
+  -e DD_APM_ENABLED=true \
+  -e DD_APM_NON_LOCAL_TRAFFIC=true \
+  -e DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true \
+  -p 8126:8126/tcp \
+  -p 8125:8125/udp \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -v /proc/:/host/proc/:ro \
+  -v /sys/fs/cgroup/:/host/sys/fs/cgroup:ro \
+  gcr.io/datadoghq/agent:latest
+```
+
+> Alternativamente, se o Agent já estiver instalado nativamente no host, habilite
+> APM (`apm_config.enabled: true`, porta `8126`) e DogStatsD com tráfego não-local
+> (`dogstatsd_non_local_traffic: true`, porta `8125`) no `datadog.yaml`.
+
+### Executar e visualizar
+
+```bash
+# 1. Inicie o Datadog Agent (com DD_API_KEY) conforme acima
+# 2. Suba a stack
+docker-compose up --build
+```
+
+- **Traces (APM):** Datadog → *APM → Traces*, filtrando por `env:dev` e pelos
+  serviços `server`, `gateway`, `auth-ms`, `pagamentos-ms`, `pedidos-ms`.
+- **Métricas:** Datadog → *Metrics → Explorer*, buscando por métricas
+  `jvm.*`, `system.*`, `http.server.requests.*` com a tag `service`.
+- Localmente, os endpoints do Actuator continuam disponíveis, ex.:
+  `http://localhost:8082/actuator/metrics`.
+
 ## Sobre o projeto
 
 <p>  O projeto trabalhado no curso é o Alura Food, onde a ideia central é que o mesmo era um monolito e estamos iniciando a decomposição em microsserviços. Começamos implementando a API e projeto do microsserviço de pagamento, tendo um banco de dados próprio [MySQL](https://www.mysql.com).

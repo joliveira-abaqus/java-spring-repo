@@ -17,3 +17,9 @@ eureka:
 jwt:
   secret: YWx1cmFmb29kLXNlY3JldC1rZXktand0LXNlY3VyaXR5LTI1Ni1iaXRzLW1pbmltdW0=
   expiration: 86400000
+
+management:
+  statsd:
+    metrics:
+      export:
+        enabled: false

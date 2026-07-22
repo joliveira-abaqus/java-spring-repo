@@ -17,3 +17,20 @@ jwt:
   secret: ${JWT_SECRET:YWx1cmFmb29kLXNlY3JldC1rZXktand0LXNlY3VyaXR5LTI1Ni1iaXRzLW1pbmltdW0=}
 gateway:
   secret: ${GATEWAY_SECRET}
+
+# Monitoramento: exporta metricas ao DogStatsD do Datadog Agent local
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  statsd:
+    metrics:
+      export:
+        enabled: true
+        flavor: datadog
+        host: ${DD_AGENT_HOST:localhost}
+        port: 8125
+  metrics:
+    tags:
+      service: ${spring.application.name}

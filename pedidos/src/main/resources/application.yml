@@ -17,3 +17,20 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8081/eureka
+
+# Monitoramento: exporta metricas ao DogStatsD do Datadog Agent local
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  statsd:
+    metrics:
+      export:
+        enabled: true
+        flavor: datadog
+        host: ${DD_AGENT_HOST:localhost}
+        port: 8125
+  metrics:
+    tags:
+      service: ${spring.application.name}
