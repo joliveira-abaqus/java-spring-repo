@@ -42,6 +42,16 @@ services:
     ports:
       - "8081:8081"
     restart: always
+    # host.docker.internal permite alcançar o Datadog Agent no host (necessário no Linux)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      DD_SERVICE: server
+      DD_ENV: dev
+      DD_VERSION: 0.0.1-SNAPSHOT
+      DD_AGENT_HOST: host.docker.internal
+      DD_TRACE_ENABLED: "true"
+      DD_LOGS_INJECTION: "true"
 
   auth:
     build: ./auth
@@ -52,7 +62,15 @@ services:
     depends_on:
       - server
       - mysql-auth
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
+      DD_SERVICE: auth-ms
+      DD_ENV: dev
+      DD_VERSION: 0.0.1-SNAPSHOT
+      DD_AGENT_HOST: host.docker.internal
+      DD_TRACE_ENABLED: "true"
+      DD_LOGS_INJECTION: "true"
       SERVER_PORT: 8085
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-auth:3306/alurafood-auth?createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root
@@ -69,7 +87,15 @@ services:
     depends_on:
       - server
       - auth
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
+      DD_SERVICE: gateway
+      DD_ENV: dev
+      DD_VERSION: 0.0.1-SNAPSHOT
+      DD_AGENT_HOST: host.docker.internal
+      DD_TRACE_ENABLED: "true"
+      DD_LOGS_INJECTION: "true"
       SERVER_PORT: 8082
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://server:8081/eureka
       JWT_SECRET: ${JWT_SECRET:-YWx1cmFmb29kLXNlY3JldC1rZXktand0LXNlY3VyaXR5LTI1Ni1iaXRzLW1pbmltdW0=}
@@ -84,7 +110,15 @@ services:
     depends_on:
       - gateway
       - mysql-pagamentos
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
+      DD_SERVICE: pagamentos-ms
+      DD_ENV: dev
+      DD_VERSION: 0.0.1-SNAPSHOT
+      DD_AGENT_HOST: host.docker.internal
+      DD_TRACE_ENABLED: "true"
+      DD_LOGS_INJECTION: "true"
       SERVER_PORT: 8083
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-pagamentos:3306/alurafood-pagamento?createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root
@@ -101,7 +135,15 @@ services:
     depends_on:
       - gateway
       - mysql-pedidos
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
+      DD_SERVICE: pedidos-ms
+      DD_ENV: dev
+      DD_VERSION: 0.0.1-SNAPSHOT
+      DD_AGENT_HOST: host.docker.internal
+      DD_TRACE_ENABLED: "true"
+      DD_LOGS_INJECTION: "true"
       SERVER_PORT: 8084
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-pedidos:3306/alurafood-pedidos?createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root

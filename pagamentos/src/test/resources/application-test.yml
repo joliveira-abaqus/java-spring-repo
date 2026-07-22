@@ -33,3 +33,9 @@ gateway:
 eureka:
   client:
     enabled: false
+
+management:
+  statsd:
+    metrics:
+      export:
+        enabled: false
