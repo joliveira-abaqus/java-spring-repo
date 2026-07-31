@@ -1,0 +1,14 @@
+# Variáveis de ambiente locais — contêm segredos
+.env
+
+# Diretórios de IDEs
+.idea/
+.vscode/
+.devin/
+
+# Maven
+target/
+
+# Docker
+data/
+*.log

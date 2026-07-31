@@ -1,6 +1,5 @@
 # Microsserviços com Java e Spring
 
-
 Projeto de microsserviços com Java e Spring, atualizado para as versões mais recentes.
 
 ## Versões
@@ -8,11 +7,23 @@ Projeto de microsserviços com Java e Spring, atualizado para as versões mais r
 | Tecnologia | Versão |
 |------------|--------|
 | Java | 25 |
-| Spring Boot | 3.5.0 |
-| Spring Cloud | 2025.0.1 |
+| Spring Boot | 4.1.0 |
+| Spring Cloud | 2025.1.2 |
 | Resilience4j | 2.3.0 |
 | MySQL | 8.0 |
 | Flyway | (gerido pelo Spring Boot) |
+
+## Arquitetura
+
+O projeto é composto por 5 microsserviços:
+
+| Serviço | Porta | Descrição |
+|---------|-------|-----------|
+| **server** | 8081 | Eureka Service Discovery |
+| **gateway** | 8082 | API Gateway (Spring Cloud Gateway) |
+| **auth** | 8085 | Autenticação e geração de JWT |
+| **pagamentos** | 8083 (Docker) / dinâmica (local) | Microsserviço de pagamentos |
+| **pedidos** | 8084 (Docker) / dinâmica (local) | Microsserviço de pedidos |
 
 ## Pré-requisitos
 
@@ -20,29 +31,48 @@ Projeto de microsserviços com Java e Spring, atualizado para as versões mais r
 - **Docker** e **Docker Compose** (para execução com containers)
 - **MySQL 8.0** (para execução local sem Docker)
 
-## Arquitetura
+## Configuração local
 
-O projeto é composto por 4 microsserviços:
+Crie um arquivo `.env` na raiz do projeto (ele já está no `.gitignore`):
 
-| Serviço | Porta | Descrição |
-|---------|-------|-----------|
-| **server** | 8081 | Eureka Service Discovery |
-| **gateway** | 8082 | API Gateway (Spring Cloud Gateway) |
-| **pagamentos** | 8083 (Docker) / dinâmica (local) | Microsserviço de pagamentos |
-| **pedidos** | 8084 (Docker) / dinâmica (local) | Microsserviço de pedidos |
+```bash
+MYSQL_ROOT_PASSWORD=changeme
+GATEWAY_SECRET=uma-chave-segura-para-dev
+JWT_SECRET=YWx1cmFmb29kLXNlY3JldC1rZXktand0LXNlY3VyaXR5LTI1Ni1iaXRzLW1pbmltdW0=
+```
+
+> Nunca commitar o `.env`. Para produção, use um gerenciador de segredos.
 
 ## Executar com Docker Compose
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
-Isso irá iniciar todos os serviços, incluindo duas instâncias MySQL (uma para pagamentos e outra para pedidos), o Eureka Server, o API Gateway e os microsserviços.
+Isso inicia todos os serviços:
+
+- 3 instâncias MySQL (auth, pagamentos e pedidos)
+- Eureka Server
+- API Gateway
+- Auth, Pagamentos e Pedidos
 
 - Eureka Dashboard: http://localhost:8081
 - API Gateway: http://localhost:8082
+- Auth (direto): http://localhost:8085
 - Pagamentos (direto): http://localhost:8083
 - Pedidos (direto): http://localhost:8084
+
+Para parar e remover os containers:
+
+```bash
+docker compose down
+```
+
+Para limpar também os volumes (remove os dados dos bancos):
+
+```bash
+docker compose down -v
+```
 
 ## Executar localmente
 
@@ -55,20 +85,42 @@ cd server && ./mvnw spring-boot:run
 # 2. Gateway
 cd gateway && ./mvnw spring-boot:run
 
-# 3. Pagamentos (requer MySQL local na porta 3306)
+# 3. Auth (requer MySQL local na porta 3308)
+cd auth && ./mvnw spring-boot:run
+
+# 4. Pagamentos (requer MySQL local na porta 3306)
 cd pagamentos && ./mvnw spring-boot:run
 
-# 4. Pedidos (requer MySQL local na porta 3306)
+# 5. Pedidos (requer MySQL local na porta 3307)
 cd pedidos && ./mvnw spring-boot:run
 ```
+
+As URLs de conexão com MySQL seguem o padrão:
+
+```
+jdbc:mysql://localhost:<porta>/<database>?createDatabaseIfNotExist=true
+```
+
+| Serviço | Porta MySQL | Database |
+|---------|-------------|----------|
+| auth | 3308 | alurafood-auth |
+| pagamentos | 3306 | alurafood-pagamento |
+| pedidos | 3307 | alurafood-pedidos |
+
+## Testes manuais
+
+Veja o arquivo [`testes-manuais.md`](testes-manuais.md) para uma sequência de chamadas HTTP para validar a autenticação, o gateway e os microsserviços.
 
 ## Executar testes
 
 ```bash
-# Pagamentos (22 testes: unitários + integração)
+# Auth
+cd auth && ./mvnw test
+
+# Pagamentos
 cd pagamentos && ./mvnw test
 
-# Pedidos (19 testes: unitários + integração)
+# Pedidos
 cd pedidos && ./mvnw test
 ```
 
@@ -136,7 +188,7 @@ docker run -d --name datadog-agent \
 ```bash
 # 1. Inicie o Datadog Agent (com DD_API_KEY) conforme acima
 # 2. Suba a stack
-docker-compose up --build
+docker compose up --build
 ```
 
 - **Traces (APM):** Datadog → *APM → Traces*, filtrando por `env:dev` e pelos
@@ -148,9 +200,8 @@ docker-compose up --build
 
 ## Sobre o projeto
 
-<p>  O projeto trabalhado no curso é o Alura Food, onde a ideia central é que o mesmo era um monolito e estamos iniciando a decomposição em microsserviços. Começamos implementando a API e projeto do microsserviço de pagamento, tendo um banco de dados próprio [MySQL](https://www.mysql.com).
-</p>
+O projeto trabalhado no curso é o Alura Food, onde a ideia central é que o mesmo era um monolito e estamos iniciando a decomposição em microsserviços. Começamos implementando a API e projeto do microsserviço de pagamento, tendo um banco de dados próprio [MySQL](https://www.mysql.com).
 
-<p>  Além disso, fazemos a implementação do Service Discovery utilizando o [Eureka](https://spring.io/projects/spring-cloud-netflix),   solução desenvolvida pela Netflix e que faz parte do [Spring Cloud](https://spring.io/projects/spring-cloud). Incluímos também à arquitetura um [API Gateway](https://spring.io/projects/spring-cloud-gateway), que vai atuar como ponto central para as nossas requisições. É feita a inclusão de um novo microsserviço, que é o de pedidos, onde praticamos a comunicação síncrona e o balanceamento de carga, quando há mais de uma instância do projeto em execução.</p>
+Além disso, fazemos a implementação do Service Discovery utilizando o [Eureka](https://spring.io/projects/spring-cloud-netflix), solução desenvolvida pela Netflix e que faz parte do [Spring Cloud](https://spring.io/projects/spring-cloud). Incluímos também à arquitetura um [API Gateway](https://spring.io/projects/spring-cloud-gateway), que vai atuar como ponto central para as nossas requisições. É feita a inclusão de um novo microsserviço, que é o de pedidos, onde praticamos a comunicação síncrona e o balanceamento de carga, quando há mais de uma instância do projeto em execução.
 
-<p>  Para fechar, tratamos os conceitos de circuit breaker e fallback, utilizando o [Resilience4J](https://resilience4j.readme.io/docs/getting-started-3) e promovendo uma alternativa quando um dos serviços está inoperante.</p>
+Para fechar, tratamos os conceitos de circuit breaker e fallback, utilizando o [Resilience4J](https://resilience4j.readme.io/docs/getting-started-3) e promovendo uma alternativa quando um dos serviços está inoperante.
